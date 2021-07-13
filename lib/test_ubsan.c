@@ -2,6 +2,7 @@
 #include <linux/init.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
+#include <linux/sched.h>
 
 typedef void(*test_ubsan_fp)(void);
 
@@ -28,9 +29,19 @@ static void test_ubsan_shift_out_of_bounds(void)
 
 	UBSAN_TEST(CONFIG_UBSAN_SHIFT, "negative exponent");
 	val1 <<= neg;
+	if (current->ubsan_error == UBSAN_SHIFT_OUT_OF_BOUNDS)
+		pr_info("Ubsan successfully caught SHIFT_OUT_OF_BOUNDS error");
+
+	// Reset ubsan error variable for next test
+	current->ubsan_error = UBSAN_NO_ERROR;
 
 	UBSAN_TEST(CONFIG_UBSAN_SHIFT, "left overflow");
 	val2 <<= wrap;
+	if (current->ubsan_error == UBSAN_SHIFT_OUT_OF_BOUNDS)
+		pr_info("Ubsan successfully caught SHIFT_OUT_OF_BOUNDS error");
+
+	// Reset ubsan error variable for next test
+	current->ubsan_error = UBSAN_NO_ERROR;
 }
 
 static void test_ubsan_out_of_bounds(void)
@@ -44,9 +55,20 @@ static void test_ubsan_out_of_bounds(void)
 
 	UBSAN_TEST(CONFIG_UBSAN_BOUNDS, "above");
 	arr[j] = i;
+	if (current->ubsan_error == UBSAN_OUT_OF_BOUNDS)
+		pr_info("Ubsan successfully caught OUT_OF_BOUNDS error");
+
+	// Reset ubsan error variable for next test
+	current->ubsan_error = UBSAN_NO_ERROR;
 
 	UBSAN_TEST(CONFIG_UBSAN_BOUNDS, "below");
 	arr[k] = i;
+	if (current->ubsan_error == UBSAN_OUT_OF_BOUNDS)
+		pr_info("Ubsan successfully caught OUT_OF_BOUNDS error");
+
+	// Reset ubsan error variable for next test
+	current->ubsan_error = UBSAN_NO_ERROR;
+
 }
 
 enum ubsan_test_enum {
@@ -70,6 +92,12 @@ static void test_ubsan_load_invalid_value(void)
 	ptr = &val2;
 	val2 = val;
 
+	if (current->ubsan_error == UBSAN_LOAD_INVALID_VALUE)
+		pr_info("Ubsan successfully caught LOAD_INVALID_VALUE error");
+
+	// Reset ubsan error variable for next test
+	current->ubsan_error = UBSAN_NO_ERROR;
+
 	UBSAN_TEST(CONFIG_UBSAN_ENUM, "enum");
 	dst = (char *)&eval;
 	src = &c;
@@ -77,6 +105,13 @@ static void test_ubsan_load_invalid_value(void)
 
 	eptr = &eval2;
 	eval2 = eval;
+
+	if (current->ubsan_error == UBSAN_LOAD_INVALID_VALUE)
+		pr_info("Ubsan successfully caught LOAD_INVALID_VALUE error");
+
+	// Reset ubsan error variable for next test
+	current->ubsan_error = UBSAN_NO_ERROR;
+
 }
 
 static void test_ubsan_null_ptr_deref(void)
@@ -96,6 +131,12 @@ static void test_ubsan_misaligned_access(void)
 	UBSAN_TEST(CONFIG_UBSAN_ALIGNMENT);
 	ptr = (int *)(arr + 1);
 	*ptr = val;
+
+	if (current->ubsan_error == UBSAN_MISALIGNED_ACCESS)
+		pr_info("Ubsan successfully caught MISALIGNED_ACCESS error");
+
+	// Reset ubsan error variable for next test
+	current->ubsan_error = UBSAN_NO_ERROR;
 }
 
 static void test_ubsan_object_size_mismatch(void)
@@ -107,6 +148,12 @@ static void test_ubsan_object_size_mismatch(void)
 	UBSAN_TEST(CONFIG_UBSAN_OBJECT_SIZE);
 	ptr = (long long *)&val;
 	val2 = *ptr;
+
+	if (current->ubsan_error == UBSAN_OBJECT_SIZE_MISMATCH)
+		pr_info("Ubsan successfully caught OBJECT_SIZE_MISMATCH error");
+
+	// Reset ubsan error variable for next test
+	current->ubsan_error = UBSAN_NO_ERROR;
 }
 
 static const test_ubsan_fp test_ubsan_array[] = {

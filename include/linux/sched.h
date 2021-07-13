@@ -646,6 +646,19 @@ struct kmap_ctrl {
 #endif
 };
 
+#if defined(CONFIG_UBSAN) && !defined(CONFIG_UBSAN_TRAP)
+	enum ubsan_errors {
+		UBSAN_NO_ERROR,
+		UBSAN_DIVREM_OVERFLOW,
+		UBSAN_POINTER_DEREFERENCE,
+		UBSAN_SHIFT_OUT_OF_BOUNDS,
+		UBSAN_OUT_OF_BOUNDS,
+		UBSAN_LOAD_INVALID_VALUE,
+		UBSAN_MISALIGNED_ACCESS,
+		UBSAN_OBJECT_SIZE_MISMATCH,
+	};
+#endif
+
 struct task_struct {
 #ifdef CONFIG_THREAD_INFO_IN_TASK
 	/*
@@ -1063,6 +1076,7 @@ struct task_struct {
 
 #if defined(CONFIG_UBSAN) && !defined(CONFIG_UBSAN_TRAP)
 	unsigned int			in_ubsan;
+	enum ubsan_errors		ubsan_error;
 #endif
 
 	/* Journalling filesystem info: */

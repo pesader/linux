@@ -175,11 +175,14 @@ void __ubsan_handle_divrem_overflow(void *_data, void *lhs, void *rhs)
 
 	val_to_string(rhs_val_str, sizeof(rhs_val_str), data->type, rhs);
 
-	if (type_is_signed(data->type) && get_signed_val(data->type, rhs) == -1)
+	if (type_is_signed(data->type) && get_signed_val(data->type, rhs) == -1){
+		current->ubsan_error = UBSAN_DIVREM_OVERFLOW;
 		pr_err("division of %s by -1 cannot be represented in type %s\n",
 			rhs_val_str, data->type->type_name);
-	else
+	} else {
+		current->ubsan_error = UBSAN_DIVREM_OVERFLOW;
 		pr_err("division by zero\n");
+	}
 
 	ubsan_epilogue();
 }
@@ -192,6 +195,7 @@ static void handle_null_ptr_deref(struct type_mismatch_data_common *data)
 
 	ubsan_prologue(data->location, "null-ptr-deref");
 
+	current->ubsan_error = UBSAN_POINTER_DEREFERENCE;
 	pr_err("%s null pointer of type %s\n",
 		type_check_kinds[data->type_check_kind],
 		data->type->type_name);
@@ -207,6 +211,7 @@ static void handle_misaligned_access(struct type_mismatch_data_common *data,
 
 	ubsan_prologue(data->location, "misaligned-access");
 
+	current->ubsan_error = UBSAN_MISALIGNED_ACCESS;
 	pr_err("%s misaligned address %p for type %s\n",
 		type_check_kinds[data->type_check_kind],
 		(void *)ptr, data->type->type_name);
@@ -222,6 +227,7 @@ static void handle_object_size_mismatch(struct type_mismatch_data_common *data,
 		return;
 
 	ubsan_prologue(data->location, "object-size-mismatch");
+	current->ubsan_error = UBSAN_OBJECT_SIZE_MISMATCH;
 	pr_err("%s address %p with insufficient space\n",
 		type_check_kinds[data->type_check_kind],
 		(void *) ptr);
@@ -283,6 +289,7 @@ void __ubsan_handle_out_of_bounds(void *_data, void *index)
 	ubsan_prologue(&data->location, "array-index-out-of-bounds");
 
 	val_to_string(index_str, sizeof(index_str), data->index_type, index);
+	current->ubsan_error = UBSAN_OUT_OF_BOUNDS;
 	pr_err("index %s is out of range for type %s\n", index_str,
 		data->array_type->type_name);
 	ubsan_epilogue();
@@ -291,6 +298,7 @@ EXPORT_SYMBOL(__ubsan_handle_out_of_bounds);
 
 void __ubsan_handle_shift_out_of_bounds(void *_data, void *lhs, void *rhs)
 {
+
 	struct shift_out_of_bounds_data *data = _data;
 	struct type_descriptor *rhs_type = data->rhs_type;
 	struct type_descriptor *lhs_type = data->lhs_type;
@@ -306,19 +314,22 @@ void __ubsan_handle_shift_out_of_bounds(void *_data, void *lhs, void *rhs)
 	val_to_string(rhs_str, sizeof(rhs_str), rhs_type, rhs);
 	val_to_string(lhs_str, sizeof(lhs_str), lhs_type, lhs);
 
-	if (val_is_negative(rhs_type, rhs))
+	if (val_is_negative(rhs_type, rhs)) {
+		current->ubsan_error = UBSAN_SHIFT_OUT_OF_BOUNDS;
 		pr_err("shift exponent %s is negative\n", rhs_str);
-
-	else if (get_unsigned_val(rhs_type, rhs) >=
-		type_bit_width(lhs_type))
-		pr_err("shift exponent %s is too large for %u-bit type %s\n",
-			rhs_str,
-			type_bit_width(lhs_type),
-			lhs_type->type_name);
-	else if (val_is_negative(lhs_type, lhs))
+	} else if (get_unsigned_val(rhs_type, rhs) >=
+		type_bit_width(lhs_type)) {
+			current->ubsan_error = UBSAN_SHIFT_OUT_OF_BOUNDS;
+			pr_err("shift exponent %s is too large for %u-bit type %s\n",
+				rhs_str,
+				type_bit_width(lhs_type),
+				lhs_type->type_name);
+	} else if (val_is_negative(lhs_type, lhs)) {
+		current->ubsan_error = UBSAN_SHIFT_OUT_OF_BOUNDS;
 		pr_err("left shift of negative value %s\n",
 			lhs_str);
-	else
+	} else
+		current->ubsan_error = UBSAN_SHIFT_OUT_OF_BOUNDS;
 		pr_err("left shift of %s by %s places cannot be"
 			" represented in type %s\n",
 			lhs_str, rhs_str,
@@ -352,7 +363,7 @@ void __ubsan_handle_load_invalid_value(void *_data, void *val)
 	ubsan_prologue(&data->location, "invalid-load");
 
 	val_to_string(val_str, sizeof(val_str), data->type, val);
-
+	current->ubsan_error = UBSAN_LOAD_INVALID_VALUE;
 	pr_err("load of value %s is not a valid value for type %s\n",
 		val_str, data->type->type_name);
 
@@ -375,12 +386,15 @@ void __ubsan_handle_alignment_assumption(void *_data, unsigned long ptr,
 
 	ubsan_prologue(&data->location, "alignment-assumption");
 
-	if (offset)
+	if (offset){
+		current->ubsan_error = UBSAN_MISALIGNED_ACCESS;
 		pr_err("assumption of %lu byte alignment (with offset of %lu byte) for pointer of type %s failed",
-		       align, offset, data->type->type_name);
-	else
+		align, offset, data->type->type_name);
+	} else {
+		current->ubsan_error = UBSAN_MISALIGNED_ACCESS;
 		pr_err("assumption of %lu byte alignment for pointer of type %s failed",
-		       align, data->type->type_name);
+		align, data->type->type_name);
+	}
 
 	real_ptr = ptr - offset;
 	pr_err("%saddress is %lu aligned, misalignment offset is %lu bytes",

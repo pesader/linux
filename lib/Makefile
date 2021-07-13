@@ -326,9 +326,9 @@ ifneq ($(CONFIG_UBSAN_TRAP),y)
 obj-$(CONFIG_UBSAN) += ubsan.o
 endif
 
-UBSAN_SANITIZE_ubsan.o := n
-KASAN_SANITIZE_ubsan.o := n
-KCSAN_SANITIZE_ubsan.o := n
+UBSAN_SANITIZE_ubsan.o := y
+KASAN_SANITIZE_ubsan.o := y
+KCSAN_SANITIZE_ubsan.o := y
 CFLAGS_ubsan.o := -fno-stack-protector $(DISABLE_STACKLEAK_PLUGIN)
 
 obj-$(CONFIG_SBITMAP) += sbitmap.o
