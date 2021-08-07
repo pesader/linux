@@ -32,9 +32,9 @@ static const char * const type_check_kinds[] = {
 
 #if (BITS_PER_LONG == 64) && defined(__BIG_ENDIAN)
 #define COLUMN_MASK (~(1U << REPORTED_BIT))
-#define LINE_MASK   (~0U)
+#define LINE_MASK (~0U)
 #else
-#define COLUMN_MASK   (~0U)
+#define COLUMN_MASK (~0U)
 #define LINE_MASK (~(1U << REPORTED_BIT))
 #endif
 
@@ -58,7 +58,7 @@ static bool type_is_int(struct type_descriptor *type)
 static bool type_is_signed(struct type_descriptor *type)
 {
 	WARN_ON(!type_is_int(type));
-	return  type->type_info & 1;
+	return type->type_info & 1;
 }
 
 static unsigned type_bit_width(struct type_descriptor *type)
@@ -155,7 +155,7 @@ static void ubsan_epilogue(void)
 		/*
 		 * This thread may hit another WARN() in the panic path.
 		 * Resetting this prevents additional WARN() from panicking the
-		 * system on this thread.  Other threads are blocked by the
+		 * system on this thread. Other threads are blocked by the
 		 * panic_mutex in panic().
 		 */
 		panic_on_warn = 0;
